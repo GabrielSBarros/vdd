@@ -129,13 +129,39 @@
       return median;
     }
 
+    const industriesDictionary = {
+      Education: "Educação",
+      Energy: "Energia",
+      Entertainment: "Entretenimento",
+      Finance: "Finanças",
+      Healthcare: "Saúde",
+      Manufacturing: "Manufatura",
+      Retail: "Varejo",
+      Technology: "Tecnologia",
+      Telecommunications: "Telecomunicações",
+      Transportation: "Transporte",
+    }
+
+    const jobsDictionary = {
+      "AI Researcher": "Pesquisador(a) de IA",
+      "Cybersecurity Analyst": "Analista de Cybersegurança",
+      "Data Scientist": "Cientista de Dados",
+      "HR Manager": "Gerente de RH",
+      "Marketing Specialist": "Especialista de Marketing",
+      "Operations Manager": "Gerente de Operações",
+      "Product Manager": "Gerente de Produto",
+      "Sales Manager": "Gerente de Vendas",
+      "Software Engineer": "Engenheiro(a) de Software",
+      "UX Designer": "UX Designer"
+    }
+
 
     async function chart() {
       const json = getJson();
 
       const data = JSON.parse(json);
 
-      const formatedData = data.map((row) => ({ ...row, Salary_USD: Math.floor(row["Salary_USD"] / 12) }))
+      const formatedData = data.map((row) => ({ ...row, Industry: industriesDictionary[row.Industry], Job_Title: jobsDictionary[row.Job_Title], Salary_USD: Math.floor(row["Salary_USD"] / 12) }))
 
       const median = groupByMedian(formatedData, "Industry")
 
@@ -143,6 +169,8 @@
 
       const industriesOrder = {}
       median.forEach(({ Industry }, i) => industriesOrder[Industry] = i)
+
+
 
       const colors = ['#044389',
         '#FCFF4B',
@@ -209,6 +237,8 @@
 
       const jobs = Array.from(new Set(groupedMedians.map((item) => item.map(({ Job_Title }) => Job_Title)).reduce((acc, cur) => [...acc, ...cur], [])));
 
+
+
       const detailedData = groupedMedians.reduce((acc, cur) => { return [...acc, ...cur] }, []);
 
       detailedOption = {
@@ -234,9 +264,9 @@
           formatter: function (param) {
             const [medianSalary, Industry, Job_Title,] = param.data;
 
-            return `Job Title: ${Job_Title} <br/>
-              Median Salary: ${medianSalary} <br/>
-              Industry: ${Industry}
+            return `Vaga: ${Job_Title} <br/>
+              Mediana do Salário: ${medianSalary} <br/>
+              Indústria: ${Industry}
               `;
           }
         },
@@ -275,6 +305,7 @@
 
       window.addEventListener('resize', myChart.resize);
     }
+
 
     chart()
 
