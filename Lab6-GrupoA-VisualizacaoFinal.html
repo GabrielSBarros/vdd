@@ -148,18 +148,16 @@
         '#FCFF4B',
         '#FFAD05',
         '#7CAFC4',
-        '#5995ED', '#ffd6af', "#E0BAD7", "#791E94", "#FF2E00", "#131B23"]
+        '#5995ED', '#FFD6AF', "#E0BAD7", "#791E94", "#FF2E00", "#131B23"]
 
       const industriesOrderArray = []
 
       Object.entries(industriesOrder).forEach(([key, value]) => industriesOrderArray[value] = key);
 
-      console.log(industriesOrderArray)
-
       option = {
         legend: {
 
-          data: industriesOrderArray,
+          show: false
 
         },
         xAxis: { name: "Mediana do Salário" },
@@ -199,8 +197,6 @@
         ]
       };
 
-
-
       const groupedMedians = industriesOrderArray.map((industry) => {
         const industryRows = formatedData.filter(({ Industry: dataIndustry }) => dataIndustry === industry)
         const medians = groupByMedian(industryRows, "Job_Title")
@@ -210,40 +206,19 @@
         return industryMedian;
       }).sort((a, b) => industriesOrder[a[0]["Industry"]] - industriesOrder[b[0]["Industry"]])
 
-      console.log(groupedMedians.map((item) => item.length))
 
-      const jobs = new Set(groupedMedians.map((item) => item.map(({ Job_Title }) => Job_Title)).reduce((acc, cur) => [...acc, ...cur], []));
+      const jobs = Array.from(new Set(groupedMedians.map((item) => item.map(({ Job_Title }) => Job_Title)).reduce((acc, cur) => [...acc, ...cur], [])));
 
       const detailedData = groupedMedians.reduce((acc, cur) => { return [...acc, ...cur] }, []);
-      console.log(detailedData);
-
-
-
-
 
       detailedOption = {
         legend: {
-
-          data: industriesOrderArray,
-
+          data: jobs,
+          show: true,
         },
 
         xAxis: { name: "Mediana do Salário" },
-
-        yAxis: [{ name: "Indústria", type: "category", show: false, data: detailedData.map((_, i) => i) },
-        {
-          type: 'category',
-          show: true,
-          position: 'left',
-          splitArea: {
-            show: true,
-            interval: 0
-          },
-          axisTick: { show: true },
-
-          splitLine: { show: true },
-          data: industriesOrderArray
-        }],
+        yAxis: [{ data: median.map(({ Industry }) => Industry), name: "Indústria", type: "category", show: true }],
         dataZoom: [
           {
             type: 'slider',
@@ -257,7 +232,7 @@
         tooltip: {
           trigger: 'item',
           formatter: function (param) {
-            const [medianSalary, index, Industry, Job_Title] = param.data;
+            const [medianSalary, Industry, Job_Title,] = param.data;
 
             return `Job Title: ${Job_Title} <br/>
               Median Salary: ${medianSalary} <br/>
@@ -265,53 +240,13 @@
               `;
           }
         },
-        // series: jobs.map((job) => ({
-        //   name: job,
-        //   symbolSize: 20,
-        //   data: detailedData.filter((Job_Title) => Job_Title === job).map(({ Job_Title, medianSalary, Industry }, index) => [medianSalary, Job_Title, Industry, Job_Title]),
-        //   type: 'bar',
-        //   itemStyle: {
-        //     color: function (param) {
-        //       const industry = param.data[2];
-
-        //       const color = colors[industriesOrder[industry]];
-        //       return color
-        //     }
-        //   }
-        // }))
-        // series: groupedMedians.map((group, i) => ({
-        //   name: group[0].Industry,
-        //   symbolSize: 20,
-        //   data: group.map(({ Job_Title, medianSalary, Industry }, index) => [medianSalary, index + i * 10, Industry, Job_Title]),
-        //   type: 'bar',
-        //   itemStyle: {
-        //     color: function (param) {
-        //       const industry = param.data[2];
-
-        //       const color = colors[industriesOrder[industry]];
-        //       return color
-        //     }
-        //   }
-        // }))
-
-        series: [
-          {
-            label: "series",
-            symbolSize: 20,
-            data: detailedData.map(({ Job_Title, medianSalary, Industry }, index) => [medianSalary, index, Industry, Job_Title]),
-            type: 'bar',
-            itemStyle: {
-              color: function (param) {
-                const industry = param.data[2];
-
-                const color = colors[industriesOrder[industry]];
-                return color
-              }
-            }
-          }
-        ]
+        series: jobs.map((job) => ({
+          name: job,
+          symbolSize: 20,
+          data: detailedData.filter(({ Job_Title }) => Job_Title === job).map(({ Job_Title, medianSalary, Industry }) => [medianSalary, Industry, Job_Title]),
+          type: 'bar',
+        }))
       }
-
 
       myChart.hideLoading();
 
@@ -319,17 +254,21 @@
       let currentOption = option;
       myChart.setOption(option);
 
-
       const sizeLimiar = 70;
+
+      const replaceSeries = {
+        replaceMerge: ['series'],
+      };
+
       myChart.on('datazoom', (event) => {
         const { start, end } = event.batch ? event.batch[0] : event;
         if (end - start < sizeLimiar && currentOption !== detailedOption) {
-          myChart.setOption(detailedOption)
+          myChart.setOption(detailedOption, replaceSeries)
           currentOption = detailedOption;
         }
 
         if (end - start >= sizeLimiar && currentOption !== option) {
-          myChart.setOption(option)
+          myChart.setOption(option, replaceSeries)
           currentOption = option;
         }
       })
