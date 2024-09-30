@@ -40,29 +40,44 @@
       </tr>
       <tr>
         <td>UNIDADE ACAD&Ecirc;MICA DE SISTEMAS E COMPUTA&Ccedil;&Atilde;O - UASC</td>
-        <td style="text-align: right;">Período: 20XX.X</td>
+        <td style="text-align: right;">Período: 2024.1</td>
       </tr>
     </tbody>
   </table>
   <div id="header">
     <h2 style="text-align:center;">Projeto de Visualização Interativa de Dados</h2>
-    <h4 style="text-align:center;"><u>Grupo X</u>: Primeiro_Nome_1 Último_Nome_1, Primeiro_Nome_2 Último_Nome_2,
-      Primeiro_Nome_3 Último_Nome_3, … &nbsp; &nbsp;</h4>
+    <h4 style="text-align:center;"><u>Grupo A</u>: Íris Farias, Lucas Pereira, Mariane Carvalho, Matheus Silva, Gabriel
+      Barros &nbsp; &nbsp;</h4>
     <p style="text-align:center;">&nbsp;</p>
     <h2 style="text-align:center;"><span
-        style="font-family:'Lucida Sans Unicode', 'Lucida Grande', sans-serif;"><strong>Título da
-          visualização</strong></span></h3>
-      <p style="text-align:justify; padding: 10px 50px 10px 50px;">Breve resumo sobre os dados (e as histórias)
-        visualizadas.</p>
+        style="font-family:'Lucida Sans Unicode', 'Lucida Grande', sans-serif;"><strong>Comparativo da mediana salarial
+          entre os diferentes setores industriais
+        </strong></span></h3>
+      <p style="text-align:justify; padding: 10px 50px 10px 50px;">
+      <p class="dataset-description">
+        O dataset utilizado é intitulado “AI-Powered Job Market Insights”, foi atualizado pela última vez em agosto de
+        2024, possuindo 500 ocorrências, e retrata um panorama do futuro do mercado de trabalho em relação a IA. Dessa
+        forma, os dados abordam questões sobre salário, modo de trabalho (remoto ou presencial) e tipo da indústria.
+      </p>
+
+      <p class="indented-text"><strong>História 1:</strong></p>
+      <p class="indented-text">Mediana do salário em dólar por setor industrial em diversos países.</p>
+
+      <p class="indented-text"><strong>História 2:</strong></p>
+      <p class="indented-text">Mediana do salário em dólar de cada emprego dentro do setor industrial.
+      </p>
   </div>
-  <div id="container" style="max-width: 100%; height: 470px; padding: 10px 50px 10px 50px;"></div>
+  <div id="container" style="max-width: 100%; height: 530px; padding: 10px 50px 10px 50px;"></div>
   <div id="footer" style="height: 2%">
     <p style="text-align:justify; padding: 20px 50px 0px 50px;"><b>Dicas para interagir com a visualização</b>:</p>
     <ul style="padding: 0px 50px 10px 75px;">
-      <li>Inserir aqui breves instruções para o usuário navegar na visualização e usar o máximo dos recursos de
-        interação disponíveis.</li>
-      <li>...</li>
-      <li>...</li>
+      <li>Informações mais detalhadas podem ser vistas ao clicar na lupa</li>
+      <li>Na exibição mais detalhada é possível filtrar quais tipos de vagas são exibidas ao clicar na legenda no canto
+        direito</li>
+      <li>Os dados podem ser aproximados e navegados utilizando o scroll do mouse, arrastando a tela ou utilizando os
+        botões no topo do gráfico</li>
+      <li>O estado inicial do gráfico pode ser restaurado ao clicar no botão cíclico no topo do gráfico</li>
+      <li>Mais informações ão exibidas ao passar o mouse em cima das barras</li>
     </ul>
   </div>
 
@@ -91,7 +106,7 @@
     var dom = document.getElementById('container');
     var myChart = echarts.init(dom, null, {
       renderer: 'canvas',
-      useDirtyRect: false
+      useDirtyRect: false,
     });
     var app = {};
     var option;
@@ -144,7 +159,7 @@
 
     const jobsDictionary = {
       "AI Researcher": "Pesquisador(a) de IA",
-      "Cybersecurity Analyst": "Analista de Cybersegurança",
+      "Cybersecurity Analyst": "Analista de Cibersegurança",
       "Data Scientist": "Cientista de Dados",
       "HR Manager": "Gerente de RH",
       "Marketing Specialist": "Especialista de Marketing",
@@ -161,51 +176,84 @@
 
       const data = JSON.parse(json);
 
-      const formatedData = data.map((row) => ({ ...row, Industry: industriesDictionary[row.Industry], Job_Title: jobsDictionary[row.Job_Title], Salary_USD: Math.floor(row["Salary_USD"] / 12) }))
+      // Formata os dados, transformando o salário anual em mensal e traduzindo os termos utilizados para o setor e vaga
+      const formattedData = data.map((row) => ({ ...row, Industry: industriesDictionary[row.Industry], Job_Title: jobsDictionary[row.Job_Title], Salary_USD: Math.floor(row["Salary_USD"] / 12) }))
 
-      const median = groupByMedian(formatedData, "Industry")
+      const median = groupByMedian(formattedData, "Industry")
 
       median.sort((a, b) => a.medianSalary - b.medianSalary)
 
       const industriesOrder = {}
       median.forEach(({ Industry }, i) => industriesOrder[Industry] = i)
 
-
-
       const colors = ['#044389',
-        '#FCFF4B',
+        '#9BC53D',
         '#FFAD05',
         '#7CAFC4',
-        '#5995ED', '#FFD6AF', "#E0BAD7", "#791E94", "#FF2E00", "#131B23"]
+        '#5995ED', '#FF87AB', "#E0BAD7", "#791E94", "#FF2E00", "#3ba272"]
 
       const industriesOrderArray = []
 
       Object.entries(industriesOrder).forEach(([key, value]) => industriesOrderArray[value] = key);
 
-      option = {
-        legend: {
+      const groupedMedians = industriesOrderArray.map((industry) => {
+        const industryRows = formattedData.filter(({ Industry: dataIndustry }) => dataIndustry === industry)
+        const medians = groupByMedian(industryRows, "Job_Title")
 
-          show: false
+        const industryMedian = medians.map(item => ({ ...item, Industry: industry })).sort((a, b) => a.medianSalary - b.medianSalary)
 
-        },
-        xAxis: { name: "Mediana do Salário" },
-        yAxis: [{ data: median.map(({ Industry }) => Industry), name: "Indústria", type: "category", show: true }, { show: false }],
+        return industryMedian;
+      }).sort((a, b) => industriesOrder[a[0]["Industry"]] - industriesOrder[b[0]["Industry"]])
+
+
+      const jobs = Array.from(new Set(groupedMedians.map((item) => item.map(({ Job_Title }) => Job_Title)).reduce((acc, cur) => [...acc, ...cur], [])));
+
+      const detailedData = groupedMedians.reduce((acc, cur) => { return [...acc, ...cur] }, []);
+
+      const baseOption = {
+        xAxis: { name: "Mediana do Salário", nameLocation: "center", nameGap: 20 },
+        yAxis: { data: median.map(({ Industry }) => Industry), name: "Setor", type: "category" },
         dataZoom: [
-          {
-            type: 'slider',
-            yAxisIndex: [0],
-          },
           {
             type: 'inside',
             yAxisIndex: [0],
           }
         ],
+      }
+
+
+      defaultOption = {
+        legend: {
+          show: false
+        },
+
         tooltip: {
           trigger: 'item',
           formatter: function (param) {
             const [medianSalary, Industry] = param.data;
 
             return `${medianSalary}`;
+          }
+        },
+        toolbox: {
+          left: 'center',
+          itemSize: 25,
+          feature: {
+            dataZoom: {
+              title: { zoom: "+Zoom", back: "Voltar Zoom" },
+              yAxisIndex: [0],
+              xAxisIndex: "none"
+            },
+            restore: { title: "Restaurar" },
+            myTool1: {
+              show: true,
+              title: 'Mais Detalhes',
+              icon: "path://M23.707,22.293l-5.969-5.969a10.016,10.016,0,1,0-1.414,1.414l5.969,5.969a1,1,0,0,0,1.414-1.414ZM10,18a8,8,0,1,1,8-8A8.009,8.009,0,0,1,10,18Z path://M13,9H11V7A1,1,0,0,0,9,7V9H7a1,1,0,0,0,0,2H9v2a1,1,0,0,0,2,0V11h2a1,1,0,0,0,0-2Z",
+              onclick: function () {
+                myChart.setOption(detailedOption, replaceSeries)
+                currentOption = detailedOption;
+              }
+            },
           }
         },
         series: [
@@ -225,40 +273,17 @@
         ]
       };
 
-      const groupedMedians = industriesOrderArray.map((industry) => {
-        const industryRows = formatedData.filter(({ Industry: dataIndustry }) => dataIndustry === industry)
-        const medians = groupByMedian(industryRows, "Job_Title")
-
-        const industryMedian = medians.map(item => ({ ...item, Industry: industry })).sort((a, b) => a.medianSalary - b.medianSalary)
-
-        return industryMedian;
-      }).sort((a, b) => industriesOrder[a[0]["Industry"]] - industriesOrder[b[0]["Industry"]])
-
-
-      const jobs = Array.from(new Set(groupedMedians.map((item) => item.map(({ Job_Title }) => Job_Title)).reduce((acc, cur) => [...acc, ...cur], [])));
-
-
-
-      const detailedData = groupedMedians.reduce((acc, cur) => { return [...acc, ...cur] }, []);
-
       detailedOption = {
         legend: {
           data: jobs,
           show: true,
+          orient: "vertical",
+          right: 35,
+          top: 80,
+          // itemStyle: {
+          //   color: (params) => console.log(params)
+          // }
         },
-
-        xAxis: { name: "Mediana do Salário" },
-        yAxis: [{ data: median.map(({ Industry }) => Industry), name: "Indústria", type: "category", show: true }],
-        dataZoom: [
-          {
-            type: 'slider',
-            yAxisIndex: [0, 1],
-          },
-          {
-            type: 'inside',
-            yAxisIndex: [0, 1],
-          },
-        ],
         tooltip: {
           trigger: 'item',
           formatter: function (param) {
@@ -270,7 +295,28 @@
               `;
           }
         },
-        series: jobs.map((job) => ({
+        toolbox: {
+          left: 'center',
+          itemSize: 25,
+          feature: {
+            dataZoom: {
+              yAxisIndex: [0],
+              xAxisIndex: "none"
+            },
+            restore: {},
+            myTool1: {
+              show: true,
+              title: 'Menos Detalhes',
+              icon: "path://M23.707,22.293l-5.969-5.969a10.016,10.016,0,1,0-1.414,1.414l5.969,5.969a1,1,0,0,0,1.414-1.414ZM10,18a8,8,0,1,1,8-8A8.009,8.009,0,0,1,10,18Z path://M13,9H7a1,1,0,0,0,0,2h6a1,1,0,0,0,0-2Z",
+              onclick: function () {
+                myChart.setOption(defaultOption, replaceSeries)
+                currentOption = defaultOption;
+              }
+            },
+          }
+        },
+        color: colors,
+        series: jobs.map((job, i) => ({
           name: job,
           symbolSize: 20,
           data: detailedData.filter(({ Job_Title }) => Job_Title === job).map(({ Job_Title, medianSalary, Industry }) => [medianSalary, Industry, Job_Title]),
@@ -279,29 +325,15 @@
       }
 
       myChart.hideLoading();
+      let currentOption = defaultOption;
 
-
-      let currentOption = option;
-      myChart.setOption(option);
+      myChart.setOption({ ...baseOption, ...defaultOption });
 
       const sizeLimiar = 70;
 
       const replaceSeries = {
-        replaceMerge: ['series'],
+        replaceMerge: ['series', 'toolbox'],
       };
-
-      myChart.on('datazoom', (event) => {
-        const { start, end } = event.batch ? event.batch[0] : event;
-        if (end - start < sizeLimiar && currentOption !== detailedOption) {
-          myChart.setOption(detailedOption, replaceSeries)
-          currentOption = detailedOption;
-        }
-
-        if (end - start >= sizeLimiar && currentOption !== option) {
-          myChart.setOption(option, replaceSeries)
-          currentOption = option;
-        }
-      })
 
       window.addEventListener('resize', myChart.resize);
     }
