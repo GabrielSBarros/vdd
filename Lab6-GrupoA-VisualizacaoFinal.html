@@ -71,7 +71,7 @@
   <div id="footer" style="height: 2%">
     <p style="text-align:justify; padding: 20px 50px 0px 50px;"><b>Dicas para interagir com a visualização</b>:</p>
     <ul style="padding: 0px 50px 10px 75px;">
-      <li>Informações mais detalhadas podem ser vistas ao clicar na lupa</li>
+      <li>O nível de detalhe pode ser alterado ao clicar na lupa no topo do gráfico</li>
       <li>Na exibição mais detalhada é possível filtrar quais tipos de vagas são exibidas ao clicar na legenda no canto
         direito</li>
       <li>Os dados podem ser aproximados e navegados utilizando o scroll do mouse, arrastando a tela ou utilizando os
@@ -179,23 +179,28 @@
       // Formata os dados, transformando o salário anual em mensal e traduzindo os termos utilizados para o setor e vaga
       const formattedData = data.map((row) => ({ ...row, Industry: industriesDictionary[row.Industry], Job_Title: jobsDictionary[row.Job_Title], Salary_USD: Math.floor(row["Salary_USD"] / 12) }))
 
+      // Agrupa os dados por setor e calcula a mediana do salario
       const median = groupByMedian(formattedData, "Industry")
 
+      // Ordena os dados pela mediana do salario
       median.sort((a, b) => a.medianSalary - b.medianSalary)
 
+      // Define a posição de cada setor
       const industriesOrder = {}
       median.forEach(({ Industry }, i) => industriesOrder[Industry] = i)
 
+      // Paleta de cores
       const colors = ['#044389',
         '#9BC53D',
         '#FFAD05',
         '#7CAFC4',
         '#5995ED', '#FF87AB', "#E0BAD7", "#791E94", "#FF2E00", "#3ba272"]
 
+      // Labels do eixo Y
       const industriesOrderArray = []
-
       Object.entries(industriesOrder).forEach(([key, value]) => industriesOrderArray[value] = key);
 
+      // Calcula a mediana de cada tipo de vaga para cada setor
       const groupedMedians = industriesOrderArray.map((industry) => {
         const industryRows = formattedData.filter(({ Industry: dataIndustry }) => dataIndustry === industry)
         const medians = groupByMedian(industryRows, "Job_Title")
@@ -205,11 +210,13 @@
         return industryMedian;
       }).sort((a, b) => industriesOrder[a[0]["Industry"]] - industriesOrder[b[0]["Industry"]])
 
-
-      const jobs = Array.from(new Set(groupedMedians.map((item) => item.map(({ Job_Title }) => Job_Title)).reduce((acc, cur) => [...acc, ...cur], [])));
-
       const detailedData = groupedMedians.reduce((acc, cur) => { return [...acc, ...cur] }, []);
 
+      // Coleta cada tipo unico de vaga
+      const jobs = Array.from(new Set(groupedMedians.map((item) => item.map(({ Job_Title }) => Job_Title)).reduce((acc, cur) => [...acc, ...cur], [])));
+
+
+      // Opções base
       const baseOption = {
         xAxis: { name: "Mediana do Salário", nameLocation: "center", nameGap: 20 },
         yAxis: { data: median.map(({ Industry }) => Industry), name: "Setor", type: "category" },
@@ -221,7 +228,7 @@
         ],
       }
 
-
+      // Opções do gráfico exibindo menos detalhes
       defaultOption = {
         legend: {
           show: false
@@ -273,6 +280,7 @@
         ]
       };
 
+      // Opções do gráfico exibindo mais detalhes
       detailedOption = {
         legend: {
           data: jobs,
@@ -280,9 +288,6 @@
           orient: "vertical",
           right: 35,
           top: 80,
-          // itemStyle: {
-          //   color: (params) => console.log(params)
-          // }
         },
         tooltip: {
           trigger: 'item',
